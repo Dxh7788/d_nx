@@ -74,6 +74,11 @@
 #define NGX_MAX_CONF_ERRSTR  1024
 
 
+//ngx命令数据结构
+/*
+ngx_str_t str类型
+ngx_uint_t unsigned int类型
+*/
 struct ngx_command_s {
     ngx_str_t             name;
     ngx_uint_t            type;

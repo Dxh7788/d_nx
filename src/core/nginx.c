@@ -37,7 +37,9 @@ static ngx_conf_enum_t  ngx_debug_points[] = {
     { ngx_null_string, 0 }
 };
 
-
+//ngx命令
+//daemon/master_process/timer_resolution/pid/lock_file/worker_processes/debug_points/user/worker_priority/worker_cpu_affinity/worker_rlimit_nofile
+//worker_rlimit_core/worker_shutdown_timeout/working_directory/env/load_module
 static ngx_command_t  ngx_core_commands[] = {
 
     { ngx_string("daemon"),
