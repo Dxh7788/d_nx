@@ -126,9 +126,10 @@ ngx_master_process_cycle(ngx_cycle_t *cycle)
 
 
     ccf = (ngx_core_conf_t *) ngx_get_conf(cycle->conf_ctx, ngx_core_module);
-
+    //开启worker process进程
     ngx_start_worker_processes(cycle, ccf->worker_processes,
                                NGX_PROCESS_RESPAWN);
+    //开启缓存管理进程
     ngx_start_cache_manager_processes(cycle, 0);
 
     ngx_new_binary = 0;
@@ -136,6 +137,7 @@ ngx_master_process_cycle(ngx_cycle_t *cycle)
     sigio = 0;
     live = 1;
 
+    //循环
     for ( ;; ) {
         if (delay) {
             if (ngx_sigalrm) {
@@ -305,7 +307,7 @@ ngx_single_process_cycle(ngx_cycle_t *cycle)
 
     for ( ;; ) {
         ngx_log_debug0(NGX_LOG_DEBUG_EVENT, cycle->log, 0, "worker cycle");
-
+        //epoll_await
         ngx_process_events_and_timers(cycle);
 
         if (ngx_terminate || ngx_quit) {
