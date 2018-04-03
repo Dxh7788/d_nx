@@ -10,6 +10,7 @@
 #include <nginx.h>
 
 
+//显示版本信息
 static void ngx_show_version_info(void);
 static ngx_int_t ngx_add_inherited_sockets(ngx_cycle_t *cycle);
 static void ngx_cleanup_environment(void *data);
@@ -203,19 +204,21 @@ main(int argc, char *const *argv)
     ngx_conf_dump_t  *cd;
     ngx_core_conf_t  *ccf;
 
+    //debug初始化信息,不会暴露
     ngx_debug_init();
-
+    //检测error配置是否正确
     if (ngx_strerror_init() != NGX_OK) {
         return 1;
     }
-
+    //检测options配置是否正确
     if (ngx_get_options(argc, argv) != NGX_OK) {
         return 1;
     }
 
+    //显示版本信息
     if (ngx_show_version) {
         ngx_show_version_info();
-
+        //测试配置信息
         if (!ngx_test_config) {
             return 0;
         }
@@ -224,19 +227,19 @@ main(int argc, char *const *argv)
     /* TODO */ ngx_max_sockets = -1;
 
     ngx_time_init();
-
+    //验证正则PCRE是否安装
 #if (NGX_PCRE)
     ngx_regex_init();
 #endif
-
+    //获取pid
     ngx_pid = ngx_getpid();
-
+    //日志配置
     log = ngx_log_init(ngx_prefix);
     if (log == NULL) {
         return 1;
     }
 
-    /* STUB */
+    /* STUB *///如果开启SSL模块
 #if (NGX_OPENSSL)
     ngx_ssl_init(log);
 #endif
@@ -279,6 +282,7 @@ main(int argc, char *const *argv)
         return 1;
     }
 
+    //加载的模块是否成功
     if (ngx_preinit_modules() != NGX_OK) {
         return 1;
     }
@@ -732,7 +736,7 @@ ngx_exec_new_binary(ngx_cycle_t *cycle, char *const *argv)
     return pid;
 }
 
-
+//nginx的操作指令函数
 static ngx_int_t
 ngx_get_options(int argc, char *const *argv)
 {
