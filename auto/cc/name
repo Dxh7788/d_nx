@@ -1,7 +1,7 @@
 
 # Copyright (C) Igor Sysoev
 # Copyright (C) Nginx, Inc.
-
+# name脚本找到编译器的名称
 
 if [ "$NGX_PLATFORM" != win32 ]; then
 

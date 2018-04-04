@@ -2,7 +2,7 @@
 # Copyright (C) Igor Sysoev
 # Copyright (C) Nginx, Inc.
 
-
+#使用cat指令向ngx_auto_config.h末尾加入内容
 cat << END >> $NGX_AUTO_CONFIG_H
 
 #ifndef $have

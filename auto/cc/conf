@@ -141,11 +141,15 @@ else
 
 fi
 
+#编译方式 使用--with-cc-opt
 CFLAGS="$CFLAGS $NGX_CC_OPT"
+#使用参数--with-ld-opt
 NGX_TEST_LD_OPT="$NGX_LD_OPT"
 
+# 如果不是win32(windows)平台,则执行特性检查
 if [ "$NGX_PLATFORM" != win32 ]; then
 
+    #NGX_LD_OPT特性检查,设置额外的链接参数
     if test -n "$NGX_LD_OPT"; then
         ngx_feature=--with-ld-opt=\"$NGX_LD_OPT\"
         ngx_feature_name=
@@ -164,6 +168,7 @@ if [ "$NGX_PLATFORM" != win32 ]; then
     fi
 
 
+    #验证特性-Wl,-E switch
     ngx_feature="-Wl,-E switch"
     ngx_feature_name=
     ngx_feature_run=no
@@ -177,7 +182,7 @@ if [ "$NGX_PLATFORM" != win32 ]; then
         MAIN_LINK="-Wl,-E"
     fi
 
-
+    #验证特性gcc builtin atomic operations
     ngx_feature="gcc builtin atomic operations"
     ngx_feature_name=NGX_HAVE_GCC_ATOMIC
     ngx_feature_run=yes
@@ -194,7 +199,7 @@ if [ "$NGX_PLATFORM" != win32 ]; then
                       __sync_synchronize();"
     . auto/feature
 
-
+    #验证特性C99 variadic macros
     if [ "$NGX_CC_NAME" = "ccc" ]; then
         echo "checking for C99 variadic macros ... disabled"
     else
@@ -211,7 +216,7 @@ if [ "$NGX_PLATFORM" != win32 ]; then
         . auto/feature
      fi
 
-
+    #验证feature特性 gcc variadic macros
     ngx_feature="gcc variadic macros"
     ngx_feature_name="NGX_HAVE_GCC_VARIADIC_MACROS"
     ngx_feature_run=yes
@@ -224,7 +229,7 @@ if [ "$NGX_PLATFORM" != win32 ]; then
                       if (buf[0] != '1') return 1"
     . auto/feature
 
-
+    #验证特性(feature) gcc builtin 64 bit byteswap
     ngx_feature="gcc builtin 64 bit byteswap"
     ngx_feature_name="NGX_HAVE_GCC_BSWAP64"
     ngx_feature_run=no
@@ -234,7 +239,7 @@ if [ "$NGX_PLATFORM" != win32 ]; then
     ngx_feature_test="if (__builtin_bswap64(0)) return 1"
     . auto/feature
 
-
+#特性 inline已弃用
 #    ngx_feature="inline"
 #    ngx_feature_name=
 #    ngx_feature_run=no

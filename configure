@@ -13,9 +13,12 @@ export LC_ALL
 
 test -d $NGX_OBJS || mkdir -p $NGX_OBJS
 
+#生成ngx_auto_headers.h文件
 echo > $NGX_AUTO_HEADERS_H
+#生成autoconf.err文件
 echo > $NGX_AUTOCONF_ERR
 
+#生成ngx_auto_config并加入#define NGX_CONFIGURE 宏定义
 echo "#define NGX_CONFIGURE \"$NGX_CONFIGURE\"" > $NGX_AUTO_CONFIG_H
 
 

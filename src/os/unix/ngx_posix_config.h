@@ -105,7 +105,7 @@
 #endif
 
 
-#include <ngx_auto_config.h>
+#include <.ngx_auto_configh>
 
 
 #if (NGX_HAVE_DLOPEN)

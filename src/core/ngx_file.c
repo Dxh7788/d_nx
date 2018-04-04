@@ -594,6 +594,7 @@ ngx_add_path(ngx_conf_t *cf, ngx_path_t **slot)
 }
 
 
+//创建路径
 ngx_int_t
 ngx_create_paths(ngx_cycle_t *cycle, ngx_uid_t user)
 {
