@@ -29,14 +29,21 @@ END
 
 ngx_test="$CC -o $NGX_AUTOTEST $NGX_AUTOTEST.c"
 
+#执行
+#'#include<unistd.h>
+#'int main(void) {
+#      return 0;
+# }'的编译结果
 eval "$ngx_test >> $NGX_AUTOCONF_ERR 2>&1"
 
+#执行
 if [ -x $NGX_AUTOTEST ]; then
 
     ngx_found=yes
 
     echo " found"
 
+    #替换小写为大写
     ngx_name=`echo $ngx_include \
               | tr abcdefghijklmnopqrstuvwxyz/. ABCDEFGHIJKLMNOPQRSTUVWXYZ__`
 

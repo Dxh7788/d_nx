@@ -61,8 +61,11 @@ if [ "$NGX_PLATFORM" != win32 ]; then
     . auto/unix
 fi
 
+#加载使用线程配置
 . auto/threads
+#加载模块配置
 . auto/modules
+#加载库配置
 . auto/lib/conf
 
 case ".$NGX_PREFIX" in
