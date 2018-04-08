@@ -94,7 +94,7 @@ struct ngx_open_file_s {
     void                 *data;
 };
 
-
+//配置文件数据格式,包括文件、缓冲区、dump缓冲区、行数
 typedef struct {
     ngx_file_t            file;
     ngx_buf_t            *buffer;

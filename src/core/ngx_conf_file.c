@@ -108,6 +108,7 @@ ngx_conf_add_dump(ngx_conf_t *cf, ngx_str_t *filename)
     ngx_str_node_t   *sn;
     ngx_conf_dump_t  *cd;
 
+    //使用crc32创建hash值
     hash = ngx_crc32_long(filename->data, filename->len);
 
     sn = ngx_str_rbtree_lookup(&cf->cycle->config_dump_rbtree, filename, hash);
@@ -153,7 +154,7 @@ ngx_conf_add_dump(ngx_conf_t *cf, ngx_str_t *filename)
     return NGX_OK;
 }
 
-
+//解析配置文件
 char *
 ngx_conf_parse(ngx_conf_t *cf, ngx_str_t *filename)
 {
@@ -172,30 +173,31 @@ ngx_conf_parse(ngx_conf_t *cf, ngx_str_t *filename)
     fd = NGX_INVALID_FILE;
     prev = NULL;
 #endif
-
+    //如果配置文件非空,则进行配置文件解析
     if (filename) {
 
         /* open configuration file */
-
+        //以只读方式打开配置文件
         fd = ngx_open_file(filename->data, NGX_FILE_RDONLY, NGX_FILE_OPEN, 0);
+        //文件无效,打出错误日志
         if (fd == NGX_INVALID_FILE) {
             ngx_conf_log_error(NGX_LOG_EMERG, cf, ngx_errno,
                                ngx_open_file_n " \"%s\" failed",
                                filename->data);
             return NGX_CONF_ERROR;
         }
-
+        //保存cf原始conf_file地址,最后还原
         prev = cf->conf_file;
-
+        //操作conf_file
         cf->conf_file = &conf_file;
-
+        //校验配置文件的文件描述
         if (ngx_fd_info(fd, &cf->conf_file->file.info) == NGX_FILE_ERROR) {
             ngx_log_error(NGX_LOG_EMERG, cf->log, ngx_errno,
                           ngx_fd_info_n " \"%s\" failed", filename->data);
         }
-
+        //定义文件描述符的缓存区,初始状态为空
         cf->conf_file->buffer = &buf;
-
+        //buf初始化,buf存放config的内容,最大4096
         buf.start = ngx_alloc(NGX_CONF_BUFFER, cf->log);
         if (buf.start == NULL) {
             goto failed;
@@ -205,7 +207,7 @@ ngx_conf_parse(ngx_conf_t *cf, ngx_str_t *filename)
         buf.last = buf.start;
         buf.end = buf.last + NGX_CONF_BUFFER;
         buf.temporary = 1;
-
+        //保存文件的fd,便于访问文件
         cf->conf_file->file.fd = fd;
         cf->conf_file->file.name.len = filename->len;
         cf->conf_file->file.name.data = filename->data;
@@ -213,6 +215,7 @@ ngx_conf_parse(ngx_conf_t *cf, ngx_str_t *filename)
         cf->conf_file->file.log = cf->log;
         cf->conf_file->line = 1;
 
+        //type=0
         type = parse_file;
 
         if (ngx_dump_config
@@ -237,7 +240,7 @@ ngx_conf_parse(ngx_conf_t *cf, ngx_str_t *filename)
         type = parse_param;
     }
 
-
+    //解析token,真正解析config的代码
     for ( ;; ) {
         rc = ngx_conf_read_token(cf);
 
@@ -505,18 +508,25 @@ ngx_conf_read_token(ngx_conf_t *cf)
     off_t        file_size;
     size_t       len;
     ssize_t      n, size;
+    //解析控制变量
     ngx_uint_t   found, need_space, last_space, sharp_comment, variable;
     ngx_uint_t   quoted, s_quoted, d_quoted, start_line;
+    //
     ngx_str_t   *word;
     ngx_buf_t   *b, *dump;
 
     found = 0;
     need_space = 0;
     last_space = 1;
+    //注释
     sharp_comment = 0;
+    //变量
     variable = 0;
+    //引号
     quoted = 0;
+    //单引号 single_quote
     s_quoted = 0;
+    //双引号,double_quote
     d_quoted = 0;
 
     cf->args->nelts = 0;
@@ -530,7 +540,7 @@ ngx_conf_read_token(ngx_conf_t *cf)
     for ( ;; ) {
 
         if (b->pos >= b->last) {
-
+            //文件解析结束逻辑
             if (cf->conf_file->file.offset >= file_size) {
 
                 if (cf->args->nelts > 0 || !last_space) {
@@ -550,7 +560,7 @@ ngx_conf_read_token(ngx_conf_t *cf)
 
                 return NGX_CONF_FILE_DONE;
             }
-
+            //做解析准备工作
             len = b->pos - start;
 
             if (len == NGX_CONF_BUFFER) {
@@ -584,7 +594,7 @@ ngx_conf_read_token(ngx_conf_t *cf)
             if (size > b->end - (b->start + len)) {
                 size = b->end - (b->start + len);
             }
-
+            //读取文件内容到缓冲区b中
             n = ngx_read_file(&cf->conf_file->file, b->start + len, size,
                               cf->conf_file->file.offset);
 
@@ -599,7 +609,7 @@ ngx_conf_read_token(ngx_conf_t *cf)
                                    n, size);
                 return NGX_ERROR;
             }
-
+            //重置缓冲区信息,起始位置
             b->pos = b->start + len;
             b->last = b->pos + n;
             start = b->start;
@@ -610,7 +620,7 @@ ngx_conf_read_token(ngx_conf_t *cf)
         }
 
         ch = *b->pos++;
-
+        //last feed 换行符,换行符代表一行结束,开始读取下一行,即cf->conf_file->line自增1
         if (ch == LF) {
             cf->conf_file->line++;
 
@@ -634,11 +644,11 @@ ngx_conf_read_token(ngx_conf_t *cf)
                 need_space = 0;
                 continue;
             }
-
+            //如果是分号代表解析完成
             if (ch == ';') {
                 return NGX_OK;
             }
-
+            //如果是{代表这个是的语义块,要嵌套解析
             if (ch == '{') {
                 return NGX_CONF_BLOCK_START;
             }
@@ -671,7 +681,7 @@ ngx_conf_read_token(ngx_conf_t *cf)
                                        "unexpected \"%c\"", ch);
                     return NGX_ERROR;
                 }
-
+                //{}可以嵌套{}
                 if (ch == '{') {
                     return NGX_CONF_BLOCK_START;
                 }
@@ -686,7 +696,7 @@ ngx_conf_read_token(ngx_conf_t *cf)
                 }
 
                 return NGX_CONF_BLOCK_DONE;
-
+            //这是个注释
             case '#':
                 sharp_comment = 1;
                 continue;
@@ -723,7 +733,7 @@ ngx_conf_read_token(ngx_conf_t *cf)
                 quoted = 1;
                 continue;
             }
-
+            //$是变量的占位符
             if (ch == '$') {
                 variable = 1;
                 continue;
