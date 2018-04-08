@@ -618,7 +618,6 @@ ngx_conf_read_token(ngx_conf_t *cf)
                 dump->last = ngx_cpymem(dump->last, b->pos, size);
             }
         }
-
         ch = *b->pos++;
         //last feed 换行符,换行符代表一行结束,开始读取下一行,即cf->conf_file->line自增1
         if (ch == LF) {
@@ -628,11 +627,11 @@ ngx_conf_read_token(ngx_conf_t *cf)
                 sharp_comment = 0;
             }
         }
-
+        //如果是注释,则返回
         if (sharp_comment) {
             continue;
         }
-
+        //如果是引号,则返回
         if (quoted) {
             quoted = 0;
             continue;
@@ -663,7 +662,8 @@ ngx_conf_read_token(ngx_conf_t *cf)
                 return NGX_ERROR;
             }
         }
-
+        //如果解析的是key则last_space为0
+        //last-space的意思是最后一位是空格,如work_processor 1;其中work_processor和1之间会有空格,这个空格就是last_space
         if (last_space) {
             if (ch == ' ' || ch == '\t' || ch == CR || ch == LF) {
                 continue;
@@ -722,7 +722,7 @@ ngx_conf_read_token(ngx_conf_t *cf)
                 last_space = 0;
             }
 
-        } else {
+        } else {//如果是key配置了block
             if (ch == '{' && variable) {
                 continue;
             }
@@ -759,7 +759,7 @@ ngx_conf_read_token(ngx_conf_t *cf)
                 last_space = 1;
                 found = 1;
             }
-
+            //如果找到了,开始解析出字符值
             if (found) {
                 word = ngx_array_push(cf->args);
                 if (word == NULL) {
