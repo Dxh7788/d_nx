@@ -317,7 +317,7 @@ ngx_conf_parse(ngx_conf_t *cf, ngx_str_t *filename)
             goto failed;
         }
 
-
+        //把模块已经定义的命令和解析出来的值相绑定
         rc = ngx_conf_handler(cf, rc);
 
         if (rc == NGX_ERROR) {
@@ -363,7 +363,7 @@ ngx_conf_handler(ngx_conf_t *cf, ngx_int_t last)
     ngx_str_t      *name;
     ngx_command_t  *cmd;
 
-    name = cf->args->elts;
+    name = cf->args->elts;//等同于取数组首元素
 
     found = 0;
 
@@ -379,7 +379,7 @@ ngx_conf_handler(ngx_conf_t *cf, ngx_int_t last)
             if (name->len != cmd->name.len) {
                 continue;
             }
-
+            //主要是找到该模块已经配置的命令比如worker_processes,只有找到了才能接着运行其他代码
             if (ngx_strcmp(name->data, cmd->name.data) != 0) {
                 continue;
             }
@@ -662,9 +662,10 @@ ngx_conf_read_token(ngx_conf_t *cf)
                 return NGX_ERROR;
             }
         }
-        //如果解析的是key则last_space为0
+        //如果解析的是key则last_space为0,last_space的初始值设置为1的原因是消除行头的空格
         //last-space的意思是最后一位是空格,如work_processor 1;其中work_processor和1之间会有空格,这个空格就是last_space
         if (last_space) {
+            //如果第一次读到' ','\t',CR或者LF,则直接返回重新读取值
             if (ch == ' ' || ch == '\t' || ch == CR || ch == LF) {
                 continue;
             }
@@ -754,12 +755,12 @@ ngx_conf_read_token(ngx_conf_t *cf)
                 }
 
             } else if (ch == ' ' || ch == '\t' || ch == CR || ch == LF
-                       || ch == ';' || ch == '{')
+                       || ch == ';' || ch == '{')//找到可用的token值,则设置last_space为1,并且把found设置为1
             {
                 last_space = 1;
                 found = 1;
             }
-            //如果找到了,开始解析出字符值
+            //如果找到了可用的token,则抓出该token值
             if (found) {
                 word = ngx_array_push(cf->args);
                 if (word == NULL) {
@@ -777,6 +778,7 @@ ngx_conf_read_token(ngx_conf_t *cf)
                 {
                     if (*src == '\\') {
                         switch (src[1]) {
+                        //如果有"、\'或者\\则src++不取值
                         case '"':
                         case '\'':
                         case '\\':

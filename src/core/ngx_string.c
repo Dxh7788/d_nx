@@ -913,7 +913,7 @@ ngx_filename_cmp(u_char *s1, u_char *s2, size_t n)
     return 0;
 }
 
-
+//指定长度的字符串转换成数字
 ngx_int_t
 ngx_atoi(u_char *line, size_t n)
 {
