@@ -132,6 +132,7 @@ ngx_init_cycle(ngx_cycle_t *old_cycle)
         return NULL;
     }
 
+    //开始初始化红黑二叉树,加强查找效率,查找效率为O(nlgn),优于平衡二叉树
     ngx_rbtree_init(&cycle->config_dump_rbtree, &cycle->config_dump_sentinel,
                     ngx_str_rbtree_insert_value);
 
