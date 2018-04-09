@@ -3,7 +3,9 @@
  * Copyright (C) Igor Sysoev
  * Copyright (C) Nginx, Inc.
  */
-
+/**
+* 用于linux的通信共享内存
+*/
 
 #include <ngx_config.h>
 #include <ngx_core.h>

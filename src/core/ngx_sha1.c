@@ -6,7 +6,9 @@
  * An internal SHA1 implementation.
  */
 
-
+/*
+* 摘要算法
+*/
 #include <ngx_config.h>
 #include <ngx_core.h>
 #include <ngx_sha1.h>
