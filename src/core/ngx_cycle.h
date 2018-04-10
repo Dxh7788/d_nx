@@ -36,40 +36,44 @@ struct ngx_shm_zone_s {
 
 
 struct ngx_cycle_s {
-    void                  ****conf_ctx;
-    ngx_pool_t               *pool;
+    void                  ****conf_ctx;/*泛型,ngx_cycle_s和conf_ctx互相持有,是两个全局上下文*/
+    ngx_pool_t               *pool;/*缓存*/
 
-    ngx_log_t                *log;
+    ngx_log_t                *log;/*日志*/
     ngx_log_t                 new_log;
 
-    ngx_uint_t                log_use_stderr;  /* unsigned  log_use_stderr:1; */
+    ngx_uint_t                log_use_stderr;  /* unsigned  log_use_stderr:1; 是否使用标准错误日志输出*/
 
     ngx_connection_t        **files;
     ngx_connection_t         *free_connections;
     ngx_uint_t                free_connection_n;
-
+    /*模块,模块数量以及modules_used开关*/
     ngx_module_t            **modules;
     ngx_uint_t                modules_n;
     ngx_uint_t                modules_used;    /* unsigned  modules_used:1; */
-
+    /*可重用的连接队列*/
     ngx_queue_t               reusable_connections_queue;
     ngx_uint_t                reusable_connections_n;
-
+    /*监听数据结构使用数组*/
     ngx_array_t               listening;
     ngx_array_t               paths;
 
     ngx_array_t               config_dump;
+    /*红黑树*/
     ngx_rbtree_t              config_dump_rbtree;
     ngx_rbtree_node_t         config_dump_sentinel;
-
+    /*打开文件列表*/
     ngx_list_t                open_files;
+    /*共享内存*/
     ngx_list_t                shared_memory;
 
     ngx_uint_t                connection_n;
     ngx_uint_t                files_n;
-
+    /*连接*/
     ngx_connection_t         *connections;
+    /*读事件*/
     ngx_event_t              *read_events;
+    /*写事件*/
     ngx_event_t              *write_events;
 
     ngx_cycle_t              *old_cycle;

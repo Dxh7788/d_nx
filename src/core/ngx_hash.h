@@ -107,7 +107,11 @@ ngx_int_t ngx_hash_init(ngx_hash_init_t *hinit, ngx_hash_key_t *names,
     ngx_uint_t nelts);
 ngx_int_t ngx_hash_wildcard_init(ngx_hash_init_t *hinit, ngx_hash_key_t *names,
     ngx_uint_t nelts);
-
+/*
+选用31的原因?
+(1)质数的特性（只有1和自己是因子）能够使得它和其他数相乘后得到的结果比其他方式更容易产成唯一性，也就是hash code值的冲突概率最小。
+(2)选择31是观测分布结果后的一个选择，不清楚原因，但的确有利
+*/
 #define ngx_hash(key, c)   ((ngx_uint_t) key * 31 + c)
 ngx_uint_t ngx_hash_key(u_char *data, size_t len);
 ngx_uint_t ngx_hash_key_lc(u_char *data, size_t len);

@@ -9,6 +9,9 @@
 #include <ngx_core.h>
 
 
+/*
+hash查找值
+*/
 void *
 ngx_hash_find(ngx_hash_t *hash, ngx_uint_t key, u_char *name, size_t len)
 {
@@ -19,6 +22,9 @@ ngx_hash_find(ngx_hash_t *hash, ngx_uint_t key, u_char *name, size_t len)
     ngx_log_error(NGX_LOG_ALERT, ngx_cycle->log, 0, "hf:\"%*s\"", len, name);
 #endif
 
+    /*
+    * hash->size是桶的大小,key % hash->size求出的是索引值.
+    */
     elt = hash->buckets[key % hash->size];
 
     if (elt == NULL) {
@@ -39,7 +45,7 @@ ngx_hash_find(ngx_hash_t *hash, ngx_uint_t key, u_char *name, size_t len)
         return elt->value;
 
     next:
-
+        //做一下内存对齐,查找下一个ngx_hash_elt_t的位置.
         elt = (ngx_hash_elt_t *) ngx_align_ptr(&elt->name[0] + elt->len,
                                                sizeof(void *));
         continue;
