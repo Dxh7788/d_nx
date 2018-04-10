@@ -1225,16 +1225,17 @@ if [ $USE_PCRE = YES ]; then
     . auto/module
 fi
 
-
+#首先modules包含核心模块以及事件模块 ngx_core_module ngx_errlog_module ngx_config_module以及ngx_event_module ngx_event_core_module
 modules="$CORE_MODULES $EVENT_MODULES"
 
 
 # thread pool module should be initialized after events
+# 是否使用线程 --with-threads
 if [ $USE_THREADS = YES ]; then
     modules="$modules $THREAD_POOL_MODULE"
 fi
 
-
+#是否开启HTTP 默认开启,可以关闭使用--without-http
 if [ $HTTP = YES ]; then
     modules="$modules $HTTP_MODULES $HTTP_FILTER_MODULES \
              $HTTP_AUX_FILTER_MODULES $HTTP_INIT_FILTER_MODULES"
@@ -1242,12 +1243,12 @@ if [ $HTTP = YES ]; then
     NGX_ADDON_DEPS="$NGX_ADDON_DEPS \$(HTTP_DEPS)"
 fi
 
-
+#使用--with-mail开启,默认关闭
 if [ $MAIL != NO ]; then
 
     if [ $MAIL = YES ]; then
         modules="$modules $MAIL_MODULES"
-
+    #动态加载MAIL
     elif [ $MAIL = DYNAMIC ]; then
         ngx_module_name=$MAIL_MODULES
         ngx_module_incs=
@@ -1262,7 +1263,7 @@ if [ $MAIL != NO ]; then
     NGX_ADDON_DEPS="$NGX_ADDON_DEPS \$(MAIL_DEPS)"
 fi
 
-
+#默认关闭,使用--with-stream开启
 if [ $STREAM != NO ]; then
 
     if [ $STREAM = YES ]; then

@@ -9,6 +9,7 @@ export LC_ALL
 
 . auto/options
 . auto/init
+#sources脚本加载了模块资源
 . auto/sources
 
 test -d $NGX_OBJS || mkdir -p $NGX_OBJS

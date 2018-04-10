@@ -2,7 +2,7 @@
 # Copyright (C) Igor Sysoev
 # Copyright (C) Nginx, Inc.
 
-
+#核心模块包括:基本核心模块ngx_core_module 错误日志模块 配置模块
 CORE_MODULES="ngx_core_module ngx_errlog_module ngx_conf_module"
 
 CORE_INCS="src/core"
@@ -79,8 +79,8 @@ CORE_SRCS="src/core/nginx.c \
            src/core/ngx_crypt.c \
            src/core/ngx_proxy_protocol.c \
            src/core/ngx_syslog.c"
-
-
+``
+#事件模块:基础事件模块ngx_events_module ,核心事件模块ngx_event_core_module
 EVENT_MODULES="ngx_events_module ngx_event_core_module"
 
 EVENT_INCS="src/event src/event/modules"
@@ -98,7 +98,7 @@ EVENT_SRCS="src/event/ngx_event.c \
             src/event/ngx_event_connect.c \
             src/event/ngx_event_pipe.c"
 
-
+#选择模块ngx_select_module
 SELECT_MODULE=ngx_select_module
 SELECT_SRCS=src/event/modules/ngx_select_module.c
 WIN32_SELECT_SRCS=src/event/modules/ngx_win32_select_module.c
