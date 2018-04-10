@@ -235,6 +235,7 @@ struct ngx_module_s {
     ngx_command_t        *commands;
     ngx_uint_t            type;
 
+    /*初始化master*/
     ngx_int_t           (*init_master)(ngx_log_t *log);
 
     ngx_int_t           (*init_module)(ngx_cycle_t *cycle);

@@ -67,6 +67,9 @@ ngx_init_modules(ngx_cycle_t *cycle)
 {
     ngx_uint_t  i;
 
+    /*
+    * 目前只有ngx_regex_module,ngx_http_v2_module,ngx_event_core_module可以执行init_module回调
+    */
     for (i = 0; cycle->modules[i]; i++) {
         if (cycle->modules[i]->init_module) {
             if (cycle->modules[i]->init_module(cycle) != NGX_OK) {
