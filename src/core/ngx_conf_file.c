@@ -58,7 +58,9 @@ static ngx_uint_t argument_number[] = {
     NGX_CONF_TAKE7
 };
 
-
+/*
+ * 解析 -g 设置的params
+ */
 char *
 ngx_conf_param(ngx_conf_t *cf)
 {
@@ -353,7 +355,9 @@ done:
     return NGX_CONF_OK;
 }
 
-
+/*
+ * 使用该方法把配置文件中解析出来的token
+ */
 static ngx_int_t
 ngx_conf_handler(ngx_conf_t *cf, ngx_int_t last)
 {
@@ -500,7 +504,9 @@ invalid:
     return NGX_ERROR;
 }
 
-
+/*
+ * 读取token值
+ */
 static ngx_int_t
 ngx_conf_read_token(ngx_conf_t *cf)
 {
@@ -821,7 +827,9 @@ ngx_conf_read_token(ngx_conf_t *cf)
     }
 }
 
-
+/*
+ * include配置解析
+ */
 char *
 ngx_conf_include(ngx_conf_t *cf, ngx_command_t *cmd, void *conf)
 {
@@ -887,7 +895,7 @@ ngx_conf_include(ngx_conf_t *cf, ngx_command_t *cmd, void *conf)
     return rv;
 }
 
-
+//获取完整名称
 ngx_int_t
 ngx_conf_full_name(ngx_cycle_t *cycle, ngx_str_t *name, ngx_uint_t conf_prefix)
 {
@@ -898,7 +906,9 @@ ngx_conf_full_name(ngx_cycle_t *cycle, ngx_str_t *name, ngx_uint_t conf_prefix)
     return ngx_get_full_name(cycle->pool, prefix, name);
 }
 
-
+/*
+ * 打开文件
+ */
 ngx_open_file_t *
 ngx_conf_open_file(ngx_cycle_t *cycle, ngx_str_t *name)
 {
@@ -962,7 +972,9 @@ ngx_conf_open_file(ngx_cycle_t *cycle, ngx_str_t *name)
     return file;
 }
 
-
+/*
+ * flush操作
+ */
 static void
 ngx_conf_flush_files(ngx_cycle_t *cycle)
 {
@@ -992,7 +1004,9 @@ ngx_conf_flush_files(ngx_cycle_t *cycle)
     }
 }
 
-
+/*
+ * 错误日志输出
+ */
 void ngx_cdecl
 ngx_conf_log_error(ngx_uint_t level, ngx_conf_t *cf, ngx_err_t err,
     const char *fmt, ...)
@@ -1026,7 +1040,9 @@ ngx_conf_log_error(ngx_uint_t level, ngx_conf_t *cf, ngx_err_t err,
                   cf->conf_file->file.name.data, cf->conf_file->line);
 }
 
-
+/*
+* 设置标志位,一般值为1,0;或者为on/off;如 demoan off;或者master_process 1；
+*/
 char *
 ngx_conf_set_flag_slot(ngx_conf_t *cf, ngx_command_t *cmd, void *conf)
 {
@@ -1066,7 +1082,9 @@ ngx_conf_set_flag_slot(ngx_conf_t *cf, ngx_command_t *cmd, void *conf)
     return NGX_CONF_OK;
 }
 
-
+/*
+* 设置string 槽,一般是配置只有一个值,而且值为string
+*/
 char *
 ngx_conf_set_str_slot(ngx_conf_t *cf, ngx_command_t *cmd, void *conf)
 {
@@ -1093,7 +1111,11 @@ ngx_conf_set_str_slot(ngx_conf_t *cf, ngx_command_t *cmd, void *conf)
     return NGX_CONF_OK;
 }
 
-
+/*
+* string数组槽设置
+*
+*
+*/
 char *
 ngx_conf_set_str_array_slot(ngx_conf_t *cf, ngx_command_t *cmd, void *conf)
 {
@@ -1129,7 +1151,9 @@ ngx_conf_set_str_array_slot(ngx_conf_t *cf, ngx_command_t *cmd, void *conf)
     return NGX_CONF_OK;
 }
 
-
+/*
+* key-value,键值对槽设置
+*/
 char *
 ngx_conf_set_keyval_slot(ngx_conf_t *cf, ngx_command_t *cmd, void *conf)
 {
@@ -1168,6 +1192,11 @@ ngx_conf_set_keyval_slot(ngx_conf_t *cf, ngx_command_t *cmd, void *conf)
 }
 
 
+/*
+* key:value,value为数值,而且是只有一个数值的赋值回调方法,
+* 比如说 :worker_processes  1;
+*        listen       80;等
+*/
 char *
 ngx_conf_set_num_slot(ngx_conf_t *cf, ngx_command_t *cmd, void *conf)
 {
@@ -1199,6 +1228,9 @@ ngx_conf_set_num_slot(ngx_conf_t *cf, ngx_command_t *cmd, void *conf)
 }
 
 
+/*
+* size值的设置
+*/
 char *
 ngx_conf_set_size_slot(ngx_conf_t *cf, ngx_command_t *cmd, void *conf)
 {
@@ -1229,7 +1261,10 @@ ngx_conf_set_size_slot(ngx_conf_t *cf, ngx_command_t *cmd, void *conf)
     return NGX_CONF_OK;
 }
 
-
+/*
+ *  偏移量设置 设置offset值;
+ *
+ */
 char *
 ngx_conf_set_off_slot(ngx_conf_t *cf, ngx_command_t *cmd, void *conf)
 {
@@ -1261,6 +1296,9 @@ ngx_conf_set_off_slot(ngx_conf_t *cf, ngx_command_t *cmd, void *conf)
 }
 
 
+/*
+ * 时间设置,尤其是超时时间、delay时间等的设置.时间是毫秒msec
+ */
 char *
 ngx_conf_set_msec_slot(ngx_conf_t *cf, ngx_command_t *cmd, void *conf)
 {
@@ -1291,7 +1329,9 @@ ngx_conf_set_msec_slot(ngx_conf_t *cf, ngx_command_t *cmd, void *conf)
     return NGX_CONF_OK;
 }
 
-
+/*
+ * 时间设置,尤其是超时时间、delay时间等的设置.时间是秒sec
+ */
 char *
 ngx_conf_set_sec_slot(ngx_conf_t *cf, ngx_command_t *cmd, void *conf)
 {
@@ -1322,7 +1362,9 @@ ngx_conf_set_sec_slot(ngx_conf_t *cf, ngx_command_t *cmd, void *conf)
     return NGX_CONF_OK;
 }
 
-
+/*
+* 缓存槽设置一般配置都带有buffers
+*/
 char *
 ngx_conf_set_bufs_slot(ngx_conf_t *cf, ngx_command_t *cmd, void *conf)
 {
@@ -1352,7 +1394,9 @@ ngx_conf_set_bufs_slot(ngx_conf_t *cf, ngx_command_t *cmd, void *conf)
     return NGX_CONF_OK;
 }
 
-
+/*
+* 枚举槽设置
+*/
 char *
 ngx_conf_set_enum_slot(ngx_conf_t *cf, ngx_command_t *cmd, void *conf)
 {
@@ -1389,7 +1433,10 @@ ngx_conf_set_enum_slot(ngx_conf_t *cf, ngx_command_t *cmd, void *conf)
     return NGX_CONF_ERROR;
 }
 
-
+/*
+*
+* 标志位设置
+*/
 char *
 ngx_conf_set_bitmask_slot(ngx_conf_t *cf, ngx_command_t *cmd, void *conf)
 {
@@ -1460,7 +1507,9 @@ ngx_conf_deprecated(ngx_conf_t *cf, void *post, void *data)
     return NGX_CONF_OK;
 }
 
-
+/*
+* 检查数值边界
+*/
 char *
 ngx_conf_check_num_bounds(ngx_conf_t *cf, void *post, void *data)
 {
