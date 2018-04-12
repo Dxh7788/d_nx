@@ -367,29 +367,30 @@ ngx_conf_handler(ngx_conf_t *cf, ngx_int_t last)
     ngx_str_t      *name;
     ngx_command_t  *cmd;
 
-    name = cf->args->elts;//等同于取数组首元素
+    name = cf->args->elts;//等同于取数组首元素,读取出来的token第一个值一般都是配置名称
 
     found = 0;
-
+    //cf->cycle->modules[i]的末尾元素为NULL,是一个哨兵
     for (i = 0; cf->cycle->modules[i]; i++) {
-
+        //获取cmd列表
         cmd = cf->cycle->modules[i]->commands;
         if (cmd == NULL) {
             continue;
         }
-
+        //cmd->name.len也有一个哨兵,其值为NULL
         for ( /* void */ ; cmd->name.len; cmd++) {
-
+            //长度相等,两个值才有相等的可能性,为了性能考虑
             if (name->len != cmd->name.len) {
                 continue;
             }
+            //长度相等后才去比较内容,提高性能
             //主要是找到该模块已经配置的命令比如worker_processes,只有找到了才能接着运行其他代码
             if (ngx_strcmp(name->data, cmd->name.data) != 0) {
                 continue;
             }
-
+            //此时已经找到,name配置.
             found = 1;
-
+            //校验模块类型是否是可配置模块以及两者的模块是否相同.event模块的配置只能由event下的配置参数读取,core模块的配置只能由core下的配置参数读取等
             if (cf->cycle->modules[i]->type != NGX_CONF_MODULE
                 && cf->cycle->modules[i]->type != cf->module_type)
             {
@@ -397,18 +398,21 @@ ngx_conf_handler(ngx_conf_t *cf, ngx_int_t last)
             }
 
             /* is the directive's location right ? */
-
+            /*
+             * 校验指令位置是否正确
+             * type类型比较多,不再一一详述
+             */
             if (!(cmd->type & cf->cmd_type)) {
                 continue;
             }
-
+            //是否解析成功,一般是解析完成
             if (!(cmd->type & NGX_CONF_BLOCK) && last != NGX_OK) {
                 ngx_conf_log_error(NGX_LOG_EMERG, cf, 0,
                                   "directive \"%s\" is not terminated by \";\"",
                                   name->data);
                 return NGX_ERROR;
             }
-
+            //是否配置模块开始,一般是解析完成
             if ((cmd->type & NGX_CONF_BLOCK) && last != NGX_CONF_BLOCK_START) {
                 ngx_conf_log_error(NGX_LOG_EMERG, cf, 0,
                                    "directive \"%s\" has no opening \"{\"",
@@ -417,31 +421,31 @@ ngx_conf_handler(ngx_conf_t *cf, ngx_int_t last)
             }
 
             /* is the directive's argument count right ? */
-
+            //配置数量是否正确
             if (!(cmd->type & NGX_CONF_ANY)) {
-
+                //NGX_CONF_FLAG的TOKEN数量必须是两个,如worker_processes 1;的token为如worker_processes和1.
                 if (cmd->type & NGX_CONF_FLAG) {
 
                     if (cf->args->nelts != 2) {
                         goto invalid;
                     }
-
+                //NGX_CONF_1MORE至少一个
                 } else if (cmd->type & NGX_CONF_1MORE) {
 
                     if (cf->args->nelts < 2) {
                         goto invalid;
                     }
-
+                //NGX_CONF_2MORE至少两个
                 } else if (cmd->type & NGX_CONF_2MORE) {
 
                     if (cf->args->nelts < 3) {
                         goto invalid;
                     }
-
+                //最多配置8个
                 } else if (cf->args->nelts > NGX_CONF_MAX_ARGS) {
 
                     goto invalid;
-
+                // TODO
                 } else if (!(cmd->type & argument_number[cf->args->nelts - 1]))
                 {
                     goto invalid;
@@ -449,23 +453,47 @@ ngx_conf_handler(ngx_conf_t *cf, ngx_int_t last)
             }
 
             /* set up the directive's configuration context */
-
+            /*
+             *所有的校验通过后,开始设置conf数据结构的值.
+             */
+            /*
+             * conf是一个泛型,不同的模块的配置不同,核心模块的配置数据结构为ngx_core_conf_t,事件的配置数据结构为ngx_event_conf_t.
+             * 针对专门的模块需要使用专门的*_conf_t数据结构定义
+             */
             conf = NULL;
 
             if (cmd->type & NGX_DIRECT_CONF) {
+                //赋值指针
                 conf = ((void **) cf->ctx)[cf->cycle->modules[i]->index];
 
             } else if (cmd->type & NGX_MAIN_CONF) {
+                //取地址&
                 conf = &(((void **) cf->ctx)[cf->cycle->modules[i]->index]);
 
             } else if (cf->ctx) {
+            //TODO 尚未参透
                 confp = *(void **) ((char *) cf->ctx + cmd->conf);
 
                 if (confp) {
                     conf = confp[cf->cycle->modules[i]->ctx_index];
                 }
             }
-
+            //开始设置参数值,调用回调函数set,set指向各个命令结构体的毁掉函数地址.详细的设置方式需要到毁掉函数中查询
+            //但一般来说毁掉函数,包括以下几种:
+            /*
+            *1.ngx_conf_set_flag_slot 设置标志位,一般值为1,0;或者为on/off;如 demoan off;或者master_process 1；
+            *2.ngx_conf_set_str_slot 设置string 槽,一般是配置只有一个值,而且值为string
+            *3.ngx_conf_set_str_array_slot string数组槽设置
+            *4.ngx_conf_set_keyval_slot key-value,键值对槽设置
+            *5.ngx_conf_set_num_slot key:value,value为数值,而且是只有一个数值的赋值回调方法,
+            *6.ngx_conf_set_size_slot size值的设置
+            *7.ngx_conf_set_off_slot 偏移量设置 设置offset值;
+            *8.ngx_conf_set_msec_slot时间设置,尤其是超时时间、delay时间等的设置.时间是毫秒msec
+            *9.ngx_conf_set_sec_slot时间设置,尤其是超时时间、delay时间等的设置.时间是秒sec
+            *10.ngx_conf_set_bufs_slot缓存槽设置一般配置都带有buffers
+            *11.ngx_conf_set_enum_slot枚举槽设置
+            *12.ngx_conf_set_bitmask_slot掩码设置
+            */
             rv = cmd->set(cf, cmd, conf);
 
             if (rv == NGX_CONF_OK) {
@@ -478,7 +506,7 @@ ngx_conf_handler(ngx_conf_t *cf, ngx_int_t last)
 
             ngx_conf_log_error(NGX_LOG_EMERG, cf, 0,
                                "\"%s\" directive %s", name->data, rv);
-
+            //TODO 为什么要返回NGX_ERROR
             return NGX_ERROR;
         }
     }
@@ -1041,7 +1069,40 @@ ngx_conf_log_error(ngx_uint_t level, ngx_conf_t *cf, ngx_err_t err,
 }
 
 /*
-* 设置标志位,一般值为1,0;或者为on/off;如 demoan off;或者master_process 1；
+* 设置标志位,一般值on/off;如 demoan off;ngx_conf_set_flag_slot的话,数据结构中都要定义响应的ngx_flag_t数据类型.比如
+typedef struct {
+    ngx_flag_t                daemon;
+    ngx_flag_t                master;
+
+    ngx_msec_t                timer_resolution;
+    ngx_msec_t                shutdown_timeout;
+
+    ngx_int_t                 worker_processes;
+    ngx_int_t                 debug_points;
+
+    ngx_int_t                 rlimit_nofile;
+    off_t                     rlimit_core;
+
+    int                       priority;
+
+    ngx_uint_t                cpu_affinity_auto;
+    ngx_uint_t                cpu_affinity_n;
+    ngx_cpuset_t             *cpu_affinity;
+
+    char                     *username;
+    ngx_uid_t                 user;
+    ngx_gid_t                 group;
+
+    ngx_str_t                 working_directory;
+    ngx_str_t                 lock_file;
+
+    ngx_str_t                 pid;
+    ngx_str_t                 oldpid;
+
+    ngx_array_t               env;
+    char                    **environment;
+} ngx_core_conf_t;
+中的daemon和master都是 ngx_flag_t类型,ngx_flag_t是intptr_t的别名.
 */
 char *
 ngx_conf_set_flag_slot(ngx_conf_t *cf, ngx_command_t *cmd, void *conf)
@@ -1053,17 +1114,19 @@ ngx_conf_set_flag_slot(ngx_conf_t *cf, ngx_command_t *cmd, void *conf)
     ngx_conf_post_t  *post;
 
     fp = (ngx_flag_t *) (p + cmd->offset);
-
+    //如果已经设置则直接报错.
     if (*fp != NGX_CONF_UNSET) {
         return "is duplicate";
     }
 
     value = cf->args->elts;
-
+    //ngx_strcasecmp转化为字符串
     if (ngx_strcasecmp(value[1].data, (u_char *) "on") == 0) {
+    //值为on则设置为1
         *fp = 1;
 
     } else if (ngx_strcasecmp(value[1].data, (u_char *) "off") == 0) {
+    //值为off则设置为0
         *fp = 0;
 
     } else {
@@ -1073,7 +1136,7 @@ ngx_conf_set_flag_slot(ngx_conf_t *cf, ngx_command_t *cmd, void *conf)
                      value[1].data, cmd->name.data);
         return NGX_CONF_ERROR;
     }
-
+    //如果需要把值传递给其他地方,则调用post
     if (cmd->post) {
         post = cmd->post;
         return post->post_handler(cf, post, fp);
@@ -1083,7 +1146,7 @@ ngx_conf_set_flag_slot(ngx_conf_t *cf, ngx_command_t *cmd, void *conf)
 }
 
 /*
-* 设置string 槽,一般是配置只有一个值,而且值为string
+* 设置string 槽,一般是配置只有一个值,而且值为string.比如:server_name  localhost;
 */
 char *
 ngx_conf_set_str_slot(ngx_conf_t *cf, ngx_command_t *cmd, void *conf)
@@ -1094,13 +1157,13 @@ ngx_conf_set_str_slot(ngx_conf_t *cf, ngx_command_t *cmd, void *conf)
     ngx_conf_post_t  *post;
 
     field = (ngx_str_t *) (p + cmd->offset);
-
+    //如果已经有值,则报错
     if (field->data) {
         return "is duplicate";
     }
 
     value = cf->args->elts;
-
+    //只取索引1的值.个数校验已经通过,不需要判空.
     *field = value[1];
 
     if (cmd->post) {
@@ -1112,9 +1175,30 @@ ngx_conf_set_str_slot(ngx_conf_t *cf, ngx_command_t *cmd, void *conf)
 }
 
 /*
-* string数组槽设置
-*
-*
+* string数组槽设置,数组保存配置的多个值,但是却是一个记录一个记录设置.比如说:
+*server  {
+        listen 443;
+        server_name   www.ttlsa.com;
+        index index.html index.htm index.<a href="http://www.ttlsa.com/php/" title="php"target="_blank">php</a>;
+        root  /data/wwwroot/www.ttlsa.com/webroot;
+        ssl on;
+        ssl_certificate "/usr/local/nginx/conf/ssl/www.ttlsa.com.public.cer";
+        ssl_certificate_key "/usr/local/nginx/conf/ssl/www.ttlsa.com.private.key";
+		......
+}
+
+server  {
+        listen 443;
+        server_name   www.heytool.com;
+        index index.html index.htm index.php;
+        root  /data/wwwroot/www.heytool.com/webroot;
+        ssl on;
+        ssl_certificate "/usr/local/nginx/conf/ssl/www.heytool.com.public.cer";
+        ssl_certificate_key "/usr/local/nginx/conf/ssl/www.heytool.com.private.key";
+		......
+}
+ssl_certificate调用ngx_conf_set_str_array_slot添加了两条记录,分别为
+/usr/local/nginx/conf/ssl/www.heytool.com.public.cer和/usr/local/nginx/conf/ssl/www.ttlsa.com.public.cer,但却是独立解析出来
 */
 char *
 ngx_conf_set_str_array_slot(ngx_conf_t *cf, ngx_command_t *cmd, void *conf)
@@ -1152,7 +1236,7 @@ ngx_conf_set_str_array_slot(ngx_conf_t *cf, ngx_command_t *cmd, void *conf)
 }
 
 /*
-* key-value,键值对槽设置
+* key-value,键值对槽设置,现在只有一个那就是proxy_set_header field value;
 */
 char *
 ngx_conf_set_keyval_slot(ngx_conf_t *cf, ngx_command_t *cmd, void *conf)
@@ -1193,9 +1277,10 @@ ngx_conf_set_keyval_slot(ngx_conf_t *cf, ngx_command_t *cmd, void *conf)
 
 
 /*
-* key:value,value为数值,而且是只有一个数值的赋值回调方法,
+*  key:value,value为数值,而且是只有一个数值的赋值回调方法,
 * 比如说 :worker_processes  1;
 *        listen       80;等
+* 解析ngx_uint_t类型的值
 */
 char *
 ngx_conf_set_num_slot(ngx_conf_t *cf, ngx_command_t *cmd, void *conf)
@@ -1214,6 +1299,7 @@ ngx_conf_set_num_slot(ngx_conf_t *cf, ngx_command_t *cmd, void *conf)
     }
 
     value = cf->args->elts;
+    //string转换成int
     *np = ngx_atoi(value[1].data, value[1].len);
     if (*np == NGX_ERROR) {
         return "invalid number";
@@ -1229,7 +1315,7 @@ ngx_conf_set_num_slot(ngx_conf_t *cf, ngx_command_t *cmd, void *conf)
 
 
 /*
-* size值的设置
+* ngx_conf_set_size_slot size值的设置
 */
 char *
 ngx_conf_set_size_slot(ngx_conf_t *cf, ngx_command_t *cmd, void *conf)
@@ -1262,8 +1348,8 @@ ngx_conf_set_size_slot(ngx_conf_t *cf, ngx_command_t *cmd, void *conf)
 }
 
 /*
- *  偏移量设置 设置offset值;
- *
+ *  ngx_conf_set_off_slot偏移量设置 设置offset值;
+ *  主要设置大小,一般的单位为K(k),M(m),G(g),或者不设置单位;
  */
 char *
 ngx_conf_set_off_slot(ngx_conf_t *cf, ngx_command_t *cmd, void *conf)
@@ -1297,7 +1383,7 @@ ngx_conf_set_off_slot(ngx_conf_t *cf, ngx_command_t *cmd, void *conf)
 
 
 /*
- * 时间设置,尤其是超时时间、delay时间等的设置.时间是毫秒msec
+ * ngx_conf_set_msec_slot时间设置,尤其是超时时间、delay时间等的设置.时间是毫秒msec
  */
 char *
 ngx_conf_set_msec_slot(ngx_conf_t *cf, ngx_command_t *cmd, void *conf)
@@ -1330,7 +1416,7 @@ ngx_conf_set_msec_slot(ngx_conf_t *cf, ngx_command_t *cmd, void *conf)
 }
 
 /*
- * 时间设置,尤其是超时时间、delay时间等的设置.时间是秒sec
+ * ngx_conf_set_sec_slot时间设置,尤其是超时时间、delay时间等的设置.时间是秒sec
  */
 char *
 ngx_conf_set_sec_slot(ngx_conf_t *cf, ngx_command_t *cmd, void *conf)
@@ -1363,7 +1449,7 @@ ngx_conf_set_sec_slot(ngx_conf_t *cf, ngx_command_t *cmd, void *conf)
 }
 
 /*
-* 缓存槽设置一般配置都带有buffers
+* ngx_conf_set_bufs_slot缓存槽设置一般配置都带有buffers
 */
 char *
 ngx_conf_set_bufs_slot(ngx_conf_t *cf, ngx_command_t *cmd, void *conf)
@@ -1380,12 +1466,12 @@ ngx_conf_set_bufs_slot(ngx_conf_t *cf, ngx_command_t *cmd, void *conf)
     }
 
     value = cf->args->elts;
-
+    //解析要使用的buf数量
     bufs->num = ngx_atoi(value[1].data, value[1].len);
     if (bufs->num == NGX_ERROR || bufs->num == 0) {
         return "invalid value";
     }
-
+    //解析要使用的buf大小
     bufs->size = ngx_parse_size(&value[2]);
     if (bufs->size == (size_t) NGX_ERROR || bufs->size == 0) {
         return "invalid value";
@@ -1395,7 +1481,7 @@ ngx_conf_set_bufs_slot(ngx_conf_t *cf, ngx_command_t *cmd, void *conf)
 }
 
 /*
-* 枚举槽设置
+* ngx_conf_set_enum_slot枚举槽设置
 */
 char *
 ngx_conf_set_enum_slot(ngx_conf_t *cf, ngx_command_t *cmd, void *conf)
@@ -1435,7 +1521,9 @@ ngx_conf_set_enum_slot(ngx_conf_t *cf, ngx_command_t *cmd, void *conf)
 
 /*
 *
-* 标志位设置
+* ngx_conf_set_bitmask_slot掩码设置
+* 常设置的值为 [error|timeout|invalid_header|http_500|http_502|http_503|http_504|http_404|off等,需要看对应的masks数组设置
+* error 报错;timeout;超时;invalid_header报文头无效;http_500 http 500;http 502;http_503 http 503;http_504 http 504;http_404 http 404;off 关闭该属性;
 */
 char *
 ngx_conf_set_bitmask_slot(ngx_conf_t *cf, ngx_command_t *cmd, void *conf)
@@ -1494,6 +1582,9 @@ ngx_conf_unsupported(ngx_conf_t *cf, ngx_command_t *cmd, void *conf)
 #endif
 
 
+/*
+* 已弃用,多用在命令的post参数上,给出弃用的日志提醒.
+*/
 char *
 ngx_conf_deprecated(ngx_conf_t *cf, void *post, void *data)
 {

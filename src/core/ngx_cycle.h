@@ -86,7 +86,7 @@ struct ngx_cycle_s {
     ngx_str_t                 hostname;
 };
 
-
+/*off_t是32位long*/
 typedef struct {
     ngx_flag_t                daemon;
     ngx_flag_t                master;
