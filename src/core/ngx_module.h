@@ -218,33 +218,41 @@
 
 #define NGX_MODULE_V1_PADDING  0, 0, 0, 0, 0, 0, 0, 0
 
-
+/*
+全局的模块数据结构
+*/
 struct ngx_module_s {
     ngx_uint_t            ctx_index;
+    /*模块的索引*/
     ngx_uint_t            index;
-
+    /*模块的名称*/
     char                 *name;
 
     ngx_uint_t            spare0;
     ngx_uint_t            spare1;
-
+    /*版本*/
     ngx_uint_t            version;
+    /*签名*/
     const char           *signature;
 
     void                 *ctx;
+    //命令
     ngx_command_t        *commands;
     ngx_uint_t            type;
 
     /*初始化master*/
     ngx_int_t           (*init_master)(ngx_log_t *log);
-
+    /*初始化模块*/
     ngx_int_t           (*init_module)(ngx_cycle_t *cycle);
-
+    /*初始化worker进程*/
     ngx_int_t           (*init_process)(ngx_cycle_t *cycle);
+    /*初始化线程*/
     ngx_int_t           (*init_thread)(ngx_cycle_t *cycle);
+    /*退出线程*/
     void                (*exit_thread)(ngx_cycle_t *cycle);
+    /*退出worker进程*/
     void                (*exit_process)(ngx_cycle_t *cycle);
-
+    /*退出master进程*/
     void                (*exit_master)(ngx_cycle_t *cycle);
 
     uintptr_t             spare_hook0;
