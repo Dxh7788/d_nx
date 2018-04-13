@@ -10,17 +10,31 @@
 #include <ngx_event.h>
 #include <ngx_channel.h>
 
-
+/*
+激活工作进程
+*/
 static void ngx_start_worker_processes(ngx_cycle_t *cycle, ngx_int_t n,
     ngx_int_t type);
+/*
+开启缓存进程
+*/
 static void ngx_start_cache_manager_processes(ngx_cycle_t *cycle,
     ngx_uint_t respawn);
 static void ngx_pass_open_channel(ngx_cycle_t *cycle, ngx_channel_t *ch);
 static void ngx_signal_worker_processes(ngx_cycle_t *cycle, int signo);
 static ngx_uint_t ngx_reap_children(ngx_cycle_t *cycle);
+/*
+ 主进程退出
+*/
 static void ngx_master_process_exit(ngx_cycle_t *cycle);
 static void ngx_worker_process_cycle(ngx_cycle_t *cycle, void *data);
+/*
+* 工作进程初始化
+*/
 static void ngx_worker_process_init(ngx_cycle_t *cycle, ngx_int_t worker);
+/*
+* 工作进程退出
+*/
 static void ngx_worker_process_exit(ngx_cycle_t *cycle);
 static void ngx_channel_handler(ngx_event_t *ev);
 static void ngx_cache_manager_process_cycle(ngx_cycle_t *cycle, void *data);
