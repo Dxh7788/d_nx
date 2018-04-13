@@ -350,11 +350,11 @@ main(int argc, char *const *argv)
     }
 
 #endif
-
+    //创建pid文件
     if (ngx_create_pidfile(&ccf->pid, cycle->log) != NGX_OK) {
         return 1;
     }
-
+    //日志重定向
     if (ngx_log_redirect_stderr(cycle) != NGX_OK) {
         return 1;
     }
@@ -372,6 +372,7 @@ main(int argc, char *const *argv)
         ngx_single_process_cycle(cycle);
 
     } else {
+        //所有配置完成后 ngx_master_process_cycle开始执行.
         ngx_master_process_cycle(cycle);
     }
 

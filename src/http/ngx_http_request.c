@@ -194,7 +194,7 @@ ngx_http_header_t  ngx_http_headers_in[] = {
     { ngx_null_string, 0, NULL }
 };
 
-
+//http初始化连接
 void
 ngx_http_init_connection(ngx_connection_t *c)
 {
@@ -373,7 +373,7 @@ ngx_http_init_connection(ngx_connection_t *c)
     }
 }
 
-
+//http等待请求
 static void
 ngx_http_wait_request_handler(ngx_event_t *rev)
 {
@@ -492,18 +492,18 @@ ngx_http_wait_request_handler(ngx_event_t *rev)
     c->log->action = "reading client request line";
 
     ngx_reusable_connection(c, 0);
-
+    //首先把ngx_event_t中的data解析出来,解析成ngx_string_t字符串,如果存在则封装请求行.
     c->data = ngx_http_create_request(c);
     if (c->data == NULL) {
         ngx_http_close_connection(c);
         return;
     }
-
+    //请求行
     rev->handler = ngx_http_process_request_line;
     ngx_http_process_request_line(rev);
 }
 
-
+//解析请求连接中数据,封装成一个request请求
 ngx_http_request_t *
 ngx_http_create_request(ngx_connection_t *c)
 {
@@ -538,7 +538,7 @@ ngx_http_create_request(ngx_connection_t *c)
     r->http_connection = hc;
     r->signature = NGX_HTTP_MODULE;
     r->connection = c;
-
+    //找到配置中的配置数据,放置在请求结构体中
     r->main_conf = hc->conf_ctx->main_conf;
     r->srv_conf = hc->conf_ctx->srv_conf;
     r->loc_conf = hc->conf_ctx->loc_conf;
@@ -549,6 +549,7 @@ ngx_http_create_request(ngx_connection_t *c)
 
     ngx_set_connection_log(r->connection, clcf->error_log);
 
+    //TODO 值得研读
     r->header_in = hc->busy ? hc->busy->buf : c->buffer;
 
     if (ngx_list_init(&r->headers_out.headers, r->pool, 20,
@@ -616,7 +617,7 @@ ngx_http_create_request(ngx_connection_t *c)
 
 
 #if (NGX_HTTP_SSL)
-
+//http ssl的握手
 static void
 ngx_http_ssl_handshake(ngx_event_t *rev)
 {
@@ -752,7 +753,7 @@ ngx_http_ssl_handshake(ngx_event_t *rev)
     ngx_http_close_connection(c);
 }
 
-
+//握手处理
 static void
 ngx_http_ssl_handshake_handler(ngx_connection_t *c)
 {
