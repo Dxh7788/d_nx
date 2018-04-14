@@ -298,7 +298,7 @@ ngx_master_process_cycle(ngx_cycle_t *cycle)
     }
 }
 
-
+/*单进程循环,主要针对测试,也可以用于所有worker进程停止的情况下*/
 void
 ngx_single_process_cycle(ngx_cycle_t *cycle)
 {
@@ -317,7 +317,7 @@ ngx_single_process_cycle(ngx_cycle_t *cycle)
             }
         }
     }
-
+    //循环accept事件
     for ( ;; ) {
         ngx_log_debug0(NGX_LOG_DEBUG_EVENT, cycle->log, 0, "worker cycle");
 
@@ -737,7 +737,7 @@ ngx_master_process_exit(ngx_cycle_t *cycle)
     exit(0);
 }
 
-
+/*worker processes 进行循环accept监听*/
 static void
 ngx_worker_process_cycle(ngx_cycle_t *cycle, void *data)
 {
@@ -1104,7 +1104,7 @@ ngx_channel_handler(ngx_event_t *ev)
     }
 }
 
-
+/*缓存进程管理*/
 static void
 ngx_cache_manager_process_cycle(ngx_cycle_t *cycle, void *data)
 {
