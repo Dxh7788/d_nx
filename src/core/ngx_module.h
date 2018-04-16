@@ -223,7 +223,7 @@
 */
 struct ngx_module_s {
     ngx_uint_t            ctx_index;
-    /*模块的索引*/
+    /*模块的上下文,一般取响应模块定义的地址*/
     ngx_uint_t            index;
     /*模块的名称*/
     char                 *name;

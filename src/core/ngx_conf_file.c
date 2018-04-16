@@ -233,7 +233,7 @@ ngx_conf_parse(ngx_conf_t *cf, ngx_str_t *filename)
         } else {
             cf->conf_file->dump = NULL;
         }
-
+        //设置为空时用于解析块
     } else if (cf->conf_file->file.fd != NGX_INVALID_FILE) {
 
         type = parse_block;
@@ -351,7 +351,7 @@ done:
     if (rc == NGX_ERROR) {
         return NGX_CONF_ERROR;
     }
-
+    //如果为parse_block则直接结束
     return NGX_CONF_OK;
 }
 

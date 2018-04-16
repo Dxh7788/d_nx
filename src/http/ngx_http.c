@@ -127,7 +127,7 @@ ngx_http_block(ngx_conf_t *cf, ngx_command_t *cmd, void *conf)
     ngx_http_core_loc_conf_t    *clcf;
     ngx_http_core_srv_conf_t   **cscfp;
     ngx_http_core_main_conf_t   *cmcf;
-
+    //验证http的主配置是否存在
     if (*(ngx_http_conf_ctx_t **) conf) {
         return "is duplicate";
     }
@@ -184,6 +184,7 @@ ngx_http_block(ngx_conf_t *cf, ngx_command_t *cmd, void *conf)
      */
 
     for (m = 0; cf->cycle->modules[m]; m++) {
+        //过滤出HTTP的模块
         if (cf->cycle->modules[m]->type != NGX_HTTP_MODULE) {
             continue;
         }
@@ -223,7 +224,7 @@ ngx_http_block(ngx_conf_t *cf, ngx_command_t *cmd, void *conf)
         }
 
         module = cf->cycle->modules[m]->ctx;
-
+        //配置的一些前置工作,比如增加变量等;
         if (module->preconfiguration) {
             if (module->preconfiguration(cf) != NGX_OK) {
                 return NGX_CONF_ERROR;
@@ -332,6 +333,7 @@ ngx_http_block(ngx_conf_t *cf, ngx_command_t *cmd, void *conf)
 
     /* optimize the lists of ports, addresses and server names */
     /*优化ports、addresses和server名称的list*/
+    /*gx_http_optimize_servers 初始化listen 端口号 ip地址 服务器等监听信息*/
     if (ngx_http_optimize_servers(cf, cmcf, cmcf->ports) != NGX_OK) {
         return NGX_CONF_ERROR;
     }
@@ -1375,7 +1377,11 @@ ngx_http_add_server(ngx_conf_t *cf, ngx_http_core_srv_conf_t *cscf,
     return NGX_OK;
 }
 
-
+/**
+ * ngx_http_optimize_servers：处理Nginx服务的监听套接字
+ * 说明：主要遍历Nginx服务器提供的端口，然后根据每一个IP地址:port这种配置创建一个监听套接字
+ * ngx_http_init_listening：初始化监听套接字
+ */
 static ngx_int_t
 ngx_http_optimize_servers(ngx_conf_t *cf, ngx_http_core_main_conf_t *cmcf,
     ngx_array_t *ports)
