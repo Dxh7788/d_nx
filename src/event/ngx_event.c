@@ -12,7 +12,9 @@
 
 #define DEFAULT_CONNECTIONS  512
 
-
+/*
+支持kqueue/event_port/dev_poll/epoll/select模型
+*/
 extern ngx_module_t ngx_kqueue_module;
 extern ngx_module_t ngx_eventport_module;
 extern ngx_module_t ngx_devpoll_module;
@@ -1235,13 +1237,13 @@ ngx_event_core_init_conf(ngx_cycle_t *cycle, void *conf)
     module = &ngx_devpoll_module;
 
 #endif
-
+//unix系列而非linux系统要打开kqueue
 #if (NGX_HAVE_KQUEUE)
 
     module = &ngx_kqueue_module;
 
 #endif
-
+//是否使用select
 #if (NGX_HAVE_SELECT)
 
     if (module == NULL) {
@@ -1249,7 +1251,7 @@ ngx_event_core_init_conf(ngx_cycle_t *cycle, void *conf)
     }
 
 #endif
-
+//默认使用event_core配置的module
     if (module == NULL) {
         for (i = 0; cycle->modules[i]; i++) {
 
@@ -1273,7 +1275,7 @@ ngx_event_core_init_conf(ngx_cycle_t *cycle, void *conf)
         ngx_log_error(NGX_LOG_EMERG, cycle->log, 0, "no events module found");
         return NGX_CONF_ERROR;
     }
-
+    //参数初始化
     ngx_conf_init_uint_value(ecf->connections, DEFAULT_CONNECTIONS);
     cycle->connection_n = ecf->connections;
 
