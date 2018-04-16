@@ -613,9 +613,9 @@ ngx_event_process_init(ngx_cycle_t *cycle)
         if (cycle->modules[m]->ctx_index != ecf->use) {
             continue;
         }
-
+        //找到模块上下文,比如ngx_epoll_module的上下文为ngx_epoll_module_ctx
         module = cycle->modules[m]->ctx;
-
+        //而它的actions中的init指向 ngx_epoll_init.因此会调用ngx_epoll_module的ngx_epoll_init
         if (module->actions.init(cycle, ngx_timer_resolution) != NGX_OK) {
             /* fatal */
             exit(2);

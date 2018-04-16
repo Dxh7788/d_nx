@@ -317,10 +317,10 @@ ngx_single_process_cycle(ngx_cycle_t *cycle)
             }
         }
     }
-    //循环accept事件
+
     for ( ;; ) {
         ngx_log_debug0(NGX_LOG_DEBUG_EVENT, cycle->log, 0, "worker cycle");
-
+        //循环accept事件
         ngx_process_events_and_timers(cycle);
 
         if (ngx_terminate || ngx_quit) {
@@ -760,7 +760,7 @@ ngx_worker_process_cycle(ngx_cycle_t *cycle, void *data)
         }
 
         ngx_log_debug0(NGX_LOG_DEBUG_EVENT, cycle->log, 0, "worker cycle");
-
+        //循环accept接收请求
         ngx_process_events_and_timers(cycle);
 
         if (ngx_terminate) {
@@ -790,7 +790,9 @@ ngx_worker_process_cycle(ngx_cycle_t *cycle, void *data)
     }
 }
 
-
+/*
+ 工作进程初始化
+*/
 static void
 ngx_worker_process_init(ngx_cycle_t *cycle, ngx_int_t worker)
 {
@@ -802,21 +804,21 @@ ngx_worker_process_init(ngx_cycle_t *cycle, ngx_int_t worker)
     struct rlimit     rlmt;
     ngx_core_conf_t  *ccf;
     ngx_listening_t  *ls;
-
+    //设置环境参数
     if (ngx_set_environment(cycle, NULL) == NULL) {
         /* fatal */
         exit(2);
     }
 
     ccf = (ngx_core_conf_t *) ngx_get_conf(cycle->conf_ctx, ngx_core_module);
-
+    //设置进程的静态优先级worker_priority
     if (worker >= 0 && ccf->priority != 0) {
         if (setpriority(PRIO_PROCESS, 0, ccf->priority) == -1) {
             ngx_log_error(NGX_LOG_ALERT, cycle->log, ngx_errno,
                           "setpriority(%d) failed", ccf->priority);
         }
     }
-
+    //设置进程的最大打开文件数限制 worker_rlimit_nofile.该指令用于定义一个worker进程可以同时处理的文件数量
     if (ccf->rlimit_nofile != NGX_CONF_UNSET) {
         rlmt.rlim_cur = (rlim_t) ccf->rlimit_nofile;
         rlmt.rlim_max = (rlim_t) ccf->rlimit_nofile;
@@ -827,7 +829,7 @@ ngx_worker_process_init(ngx_cycle_t *cycle, ngx_int_t worker)
                           ccf->rlimit_nofile);
         }
     }
-
+    //worker_rlimit_core 用于定义每个进程核心文件的最大值，主要用于debug
     if (ccf->rlimit_core != NGX_CONF_UNSET) {
         rlmt.rlim_cur = (rlim_t) ccf->rlimit_core;
         rlmt.rlim_max = (rlim_t) ccf->rlimit_core;
@@ -838,21 +840,24 @@ ngx_worker_process_init(ngx_cycle_t *cycle, ngx_int_t worker)
                           ccf->rlimit_core);
         }
     }
-
+    //geteuid()用来取得执行目前进程有效的用户识别码。
+    //有效的用户识别码用来决定进程执行的权限，借由此改变此值，进程可以获得额外的权限。
+    //倘若执行文件的setID位已被设置，该文件执行时，其进程的euid值便会设成该文件所有者的uid
     if (geteuid() == 0) {
+        //设置群组
         if (setgid(ccf->group) == -1) {
             ngx_log_error(NGX_LOG_EMERG, cycle->log, ngx_errno,
                           "setgid(%d) failed", ccf->group);
             /* fatal */
             exit(2);
         }
-
+        //初始化群组和用户
         if (initgroups(ccf->username, ccf->group) == -1) {
             ngx_log_error(NGX_LOG_EMERG, cycle->log, ngx_errno,
                           "initgroups(%s, %d) failed",
                           ccf->username, ccf->group);
         }
-
+        //设置username账户信息
         if (setuid(ccf->user) == -1) {
             ngx_log_error(NGX_LOG_EMERG, cycle->log, ngx_errno,
                           "setuid(%d) failed", ccf->user);
@@ -860,7 +865,7 @@ ngx_worker_process_init(ngx_cycle_t *cycle, ngx_int_t worker)
             exit(2);
         }
     }
-
+    //如果工作进程大于0,则要和cpu数量做一下关联.
     if (worker >= 0) {
         cpu_affinity = ngx_get_cpu_affinity(worker);
 
@@ -879,7 +884,7 @@ ngx_worker_process_init(ngx_cycle_t *cycle, ngx_int_t worker)
     }
 
 #endif
-
+    //工作空间有效性校验
     if (ccf->working_directory.len) {
         if (chdir((char *) ccf->working_directory.data) == -1) {
             ngx_log_error(NGX_LOG_ALERT, cycle->log, ngx_errno,
@@ -890,7 +895,7 @@ ngx_worker_process_init(ngx_cycle_t *cycle, ngx_int_t worker)
     }
 
     sigemptyset(&set);
-
+    //sigprocmask()用于改变进程的当前阻塞信号集,也可以用来检测当前进程的信号掩码
     if (sigprocmask(SIG_SETMASK, &set, NULL) == -1) {
         ngx_log_error(NGX_LOG_ALERT, cycle->log, ngx_errno,
                       "sigprocmask() failed");
@@ -907,7 +912,7 @@ ngx_worker_process_init(ngx_cycle_t *cycle, ngx_int_t worker)
     for (i = 0; i < cycle->listening.nelts; i++) {
         ls[i].previous = NULL;
     }
-
+    //工作进程初始化数据 init_process,event模块中只有ngx_event_core_module中有_process的定义,其方法为ngx_event_process_init.暂时研究其他模块
     for (i = 0; cycle->modules[i]; i++) {
         if (cycle->modules[i]->init_process) {
             if (cycle->modules[i]->init_process(cycle) == NGX_ERROR) {
@@ -922,7 +927,7 @@ ngx_worker_process_init(ngx_cycle_t *cycle, ngx_int_t worker)
         if (ngx_processes[n].pid == -1) {
             continue;
         }
-
+        //这一步是什么意思.
         if (n == ngx_process_slot) {
             continue;
         }

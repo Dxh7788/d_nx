@@ -407,7 +407,7 @@ extern ngx_uint_t            ngx_use_epoll_rdhup;
 #define NGX_CLEAR_EVENT    0    /* dummy declaration */
 #endif
 
-
+//events 的actions
 #define ngx_process_events   ngx_event_actions.process_events
 #define ngx_done_events      ngx_event_actions.done
 

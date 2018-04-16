@@ -340,7 +340,7 @@ ngx_epoll_init(ngx_cycle_t *cycle, ngx_msec_t timer)
             ngx_epoll_module_ctx.actions.notify = NULL;
         }
 #endif
-
+//是否开启文件异步不阻塞IO
 #if (NGX_HAVE_FILE_AIO)
         ngx_epoll_aio_init(cycle, epcf);
 #endif
@@ -365,7 +365,7 @@ ngx_epoll_init(ngx_cycle_t *cycle, ngx_msec_t timer)
     nevents = epcf->events;
 
     ngx_io = ngx_os_io;
-
+    //event事件集
     ngx_event_actions = ngx_epoll_module_ctx.actions;
 
 #if (NGX_HAVE_CLEAR_EVENT)
@@ -386,7 +386,7 @@ static ngx_int_t
 ngx_epoll_notify_init(ngx_log_t *log)
 {
     struct epoll_event  ee;
-
+    //这个函数会创建一个 事件对象 (eventfd object), 用来实现，进程(线程)间的等待/通知(wait/notify) 机制. 内核会为这个对象维护一个64位的计数器(uint64_t)
 #if (NGX_HAVE_SYS_EVENTFD_H)
     notify_fd = eventfd(0, 0);
 #else
@@ -401,6 +401,7 @@ ngx_epoll_notify_init(ngx_log_t *log)
     ngx_log_debug1(NGX_LOG_DEBUG_EVENT, log, 0,
                    "notify eventfd: %d", notify_fd);
 
+    //设置处理器为 ngx_epoll_notify_handler
     notify_event.handler = ngx_epoll_notify_handler;
     notify_event.log = log;
     notify_event.active = 1;
@@ -411,7 +412,8 @@ ngx_epoll_notify_init(ngx_log_t *log)
 
     ee.events = EPOLLIN|EPOLLET;
     ee.data.ptr = &notify_conn;
-
+    //epoll_ctl 函数用于控制某个epoll文件描述符上的事件，可以注册事件，修改事件，删除事件
+    //注册通知事件
     if (epoll_ctl(ep, EPOLL_CTL_ADD, notify_fd, &ee) == -1) {
         ngx_log_error(NGX_LOG_EMERG, log, ngx_errno,
                       "epoll_ctl(EPOLL_CTL_ADD, eventfd) failed");
@@ -779,7 +781,7 @@ ngx_epoll_notify(ngx_event_handler_pt handler)
 
 #endif
 
-
+//ngx的epoll处理事件
 static ngx_int_t
 ngx_epoll_process_events(ngx_cycle_t *cycle, ngx_msec_t timer, ngx_uint_t flags)
 {
