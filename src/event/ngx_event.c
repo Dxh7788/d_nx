@@ -13,7 +13,7 @@
 #define DEFAULT_CONNECTIONS  512
 
 /*
-支持kqueue/event_port/dev_poll/epoll/select模型
+支持kqueue/event_port/dev_poll/epoll/select模型,但只能支持一种.linux系统可以选择epoll,unix系统可以选择kqueue.
 */
 extern ngx_module_t ngx_kqueue_module;
 extern ngx_module_t ngx_eventport_module;
@@ -141,21 +141,21 @@ static ngx_command_t  ngx_event_core_commands[] = {
       0,
       offsetof(ngx_event_conf_t, multi_accept),
       NULL },
-
+    //并发锁
     { ngx_string("accept_mutex"),
       NGX_EVENT_CONF|NGX_CONF_FLAG,
       ngx_conf_set_flag_slot,
       0,
       offsetof(ngx_event_conf_t, accept_mutex),
       NULL },
-
+    //阻塞时间,或者称为锁时间
     { ngx_string("accept_mutex_delay"),
       NGX_EVENT_CONF|NGX_CONF_TAKE1,
       ngx_conf_set_msec_slot,
       0,
       offsetof(ngx_event_conf_t, accept_mutex_delay),
       NULL },
-
+    //debug的连接数
     { ngx_string("debug_connection"),
       NGX_EVENT_CONF|NGX_CONF_TAKE1,
       ngx_event_debug_connection,
