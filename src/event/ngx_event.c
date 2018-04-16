@@ -261,7 +261,9 @@ ngx_process_events_and_timers(ngx_cycle_t *cycle)
     ngx_event_process_posted(cycle, &ngx_posted_events);
 }
 
-
+/*
+读事件处理
+*/
 ngx_int_t
 ngx_handle_read_event(ngx_event_t *rev, ngx_uint_t flags)
 {
@@ -329,7 +331,7 @@ ngx_handle_read_event(ngx_event_t *rev, ngx_uint_t flags)
     return NGX_OK;
 }
 
-
+//写事件处理器 handler
 ngx_int_t
 ngx_handle_write_event(ngx_event_t *wev, size_t lowat)
 {
