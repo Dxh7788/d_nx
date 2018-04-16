@@ -134,7 +134,7 @@ static ngx_command_t  ngx_event_core_commands[] = {
       0,
       0,
       NULL },
-
+    //并发接收
     { ngx_string("multi_accept"),
       NGX_EVENT_CONF|NGX_CONF_FLAG,
       ngx_conf_set_flag_slot,

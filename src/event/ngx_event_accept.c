@@ -630,13 +630,12 @@ ngx_event_recvmsg(ngx_event_t *ev)
 
         log->data = NULL;
         log->handler = NULL;
-
+        //此处的handler为 ngx_event_accept 即为接收事件
         ls->handler(c);
-
         if (ngx_event_flags & NGX_USE_KQUEUE_EVENT) {
             ev->available -= n;
         }
-
+    //ev->available是并发接收值
     } while (ev->available);
 }
 
