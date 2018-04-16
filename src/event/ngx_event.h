@@ -438,16 +438,20 @@ extern ngx_os_io_t  ngx_io;
 
 
 typedef struct {
+    //指令worker_connections 主要用来社会允许每一个worker process 同时开启的的最大连接数.默认值为512
+    //连接数,这里的connections不仅仅包括和前端用户建立的连接数，而是包括所有可能的连接数。另外，number 值 不能大于操作系统支持打开的最大文件句柄数量
     ngx_uint_t    connections;
+    //是否是在用配置,初始值为 NGX_CONF_UNSET_UINT,NGX_CONF_UNSET_UINT代表未设置,未使用.使用哪个模块,比如use epoll;开启使用epoll
     ngx_uint_t    use;
-
+    //是否支持并发接收,默认为0,不开启
     ngx_flag_t    multi_accept;
+    //互斥锁,默认为1,开启
     ngx_flag_t    accept_mutex;
-
+    //互斥锁释放延时
     ngx_msec_t    accept_mutex_delay;
-
+    //模块名称,默认使用commands的名称
     u_char       *name;
-
+    //专供debug使用,开一下debug下的连接数组
 #if (NGX_DEBUG)
     ngx_array_t   debug_connection;
 #endif

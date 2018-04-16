@@ -123,7 +123,7 @@ ngx_event_accept(ngx_event_t *ev)
                         ngx_shmtx_unlock(&ngx_accept_mutex);
                         ngx_accept_mutex_held = 0;
                     }
-
+                    //禁止接收数据
                     ngx_accept_disabled = 1;
 
                 } else {

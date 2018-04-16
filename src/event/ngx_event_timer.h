@@ -62,7 +62,7 @@ ngx_event_add_timer(ngx_event_t *ev, ngx_msec_t timer)
          * value is less than NGX_TIMER_LAZY_DELAY milliseconds: this allows
          * to minimize the rbtree operations for fast connections.
          */
-
+        //默认延时5分钟=300ms
         diff = (ngx_msec_int_t) (key - ev->timer.key);
 
         if (ngx_abs(diff) < NGX_TIMER_LAZY_DELAY) {
