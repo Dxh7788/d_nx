@@ -413,7 +413,9 @@ ngx_epoll_notify_init(ngx_log_t *log)
     ee.events = EPOLLIN|EPOLLET;
     ee.data.ptr = &notify_conn;
     //epoll_ctl 函数用于控制某个epoll文件描述符上的事件，可以注册事件，修改事件，删除事件
-    //注册通知事件
+    //注册通知事件,需要监听的fd为notify_fd,需要监听的事件为EPOLLIN和EPOLLET
+    //EPOLLIN：触发该事件，表示对应的文件描述符上有可读数据。(包括对端SOCKET正常关闭)
+    // EPOLLET：将EPOLL设为边缘触发(Edge Triggered)模式，这是相对于水平触发(Level Triggered)来说的
     if (epoll_ctl(ep, EPOLL_CTL_ADD, notify_fd, &ee) == -1) {
         ngx_log_error(NGX_LOG_EMERG, log, ngx_errno,
                       "epoll_ctl(EPOLL_CTL_ADD, eventfd) failed");
