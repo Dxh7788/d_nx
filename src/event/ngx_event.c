@@ -937,7 +937,7 @@ ngx_events_block(ngx_conf_t *cf, ngx_command_t *cmd, void *conf)
         }
 
         m = cf->cycle->modules[i]->ctx;
-
+        //创建配置
         if (m->create_conf) {
             (*ctx)[cf->cycle->modules[i]->ctx_index] =
                                                      m->create_conf(cf->cycle);
@@ -966,7 +966,7 @@ ngx_events_block(ngx_conf_t *cf, ngx_command_t *cmd, void *conf)
         }
 
         m = cf->cycle->modules[i]->ctx;
-
+        //初始化配置
         if (m->init_conf) {
             rv = m->init_conf(cf->cycle,
                               (*ctx)[cf->cycle->modules[i]->ctx_index]);
