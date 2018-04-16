@@ -705,7 +705,11 @@ static ngx_int_t
 ngx_epoll_add_connection(ngx_connection_t *c)
 {
     struct epoll_event  ee;
-
+    //事件包括:
+    //EPOLLIN：触发该事件，表示对应的文件描述符上有可读数据。(包括对端SOCKET正常关闭)
+    //EPOLLOUT：触发该事件，表示对应的文件描述符上可以写数据
+    //EPOLLET：将EPOLL设为边缘触发(Edge Triggered)模式，这是相对于水平触发(Level Triggered)来说的
+    //EPOLLHUP：表示对应的文件描述符被挂断
     ee.events = EPOLLIN|EPOLLOUT|EPOLLET|EPOLLRDHUP;
     ee.data.ptr = (void *) ((uintptr_t) c | c->read->instance);
 

@@ -222,14 +222,14 @@ ngx_add_channel_event(ngx_cycle_t *cycle, ngx_fd_t fd, ngx_int_t event,
     ev = (event == NGX_READ_EVENT) ? rev : wev;
 
     ev->handler = handler;
-
+    //还没有连接
     if (ngx_add_conn && (ngx_event_flags & NGX_USE_EPOLL_EVENT) == 0) {
         if (ngx_add_conn(c) == NGX_ERROR) {
             ngx_free_connection(c);
             return NGX_ERROR;
         }
 
-    } else {
+    } else {//已经连接,则添加事件
         if (ngx_add_event(ev, event, 0) == NGX_ERROR) {
             ngx_free_connection(c);
             return NGX_ERROR;

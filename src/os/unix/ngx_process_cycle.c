@@ -950,7 +950,7 @@ ngx_worker_process_init(ngx_cycle_t *cycle, ngx_int_t worker)
 #if 0
     ngx_last_process = 0;
 #endif
-
+    //添加channel的事件
     if (ngx_add_channel_event(cycle, ngx_channel, NGX_READ_EVENT,
                               ngx_channel_handler)
         == NGX_ERROR)
