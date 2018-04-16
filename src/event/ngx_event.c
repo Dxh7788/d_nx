@@ -189,7 +189,7 @@ ngx_module_t  ngx_event_core_module = {
     NGX_MODULE_V1_PADDING
 };
 
-
+//ngx处理事件和定时器的方法
 void
 ngx_process_events_and_timers(ngx_cycle_t *cycle)
 {
@@ -238,7 +238,7 @@ ngx_process_events_and_timers(ngx_cycle_t *cycle)
     }
 
     delta = ngx_current_msec;
-    //这里进行accept循环
+    //这里进行accept循环,这里会调用 ngx_epoll_process_events 来处理事件
     (void) ngx_process_events(cycle, timer, flags);
 
     delta = ngx_current_msec - delta;
