@@ -47,7 +47,7 @@ struct epoll_event {
     epoll_data_t  data;
 };
 
-
+//创建处理fd的队列,处理大小为size,超过size的不保证效果
 int epoll_create(int size);
 
 int epoll_create(int size)
@@ -55,7 +55,7 @@ int epoll_create(int size)
     return -1;
 }
 
-
+//注册事件
 int epoll_ctl(int epfd, int op, int fd, struct epoll_event *event);
 
 int epoll_ctl(int epfd, int op, int fd, struct epoll_event *event)
@@ -63,7 +63,7 @@ int epoll_ctl(int epfd, int op, int fd, struct epoll_event *event)
     return -1;
 }
 
-
+//等待监听
 int epoll_wait(int epfd, struct epoll_event *events, int nevents, int timeout);
 
 int epoll_wait(int epfd, struct epoll_event *events, int nevents, int timeout)
@@ -808,7 +808,7 @@ ngx_epoll_process_events(ngx_cycle_t *cycle, ngx_msec_t timer, ngx_uint_t flags)
     events = epoll_wait(ep, event_list, (int) nevents, timer);
 
     err = (events == -1) ? ngx_errno : 0;
-
+    //时间更新
     if (flags & NGX_UPDATE_TIME || ngx_event_timer_alarm) {
         ngx_time_update();
     }
@@ -887,9 +887,9 @@ ngx_epoll_process_events(ngx_cycle_t *cycle, ngx_msec_t timer, ngx_uint_t flags)
                           c->fd, revents);
         }
 #endif
-
+        //读取数据
         if ((revents & EPOLLIN) && rev->active) {
-
+//2.6.7版本内核中增加EPOLLRDHUP事件，表示对端断开连接
 #if (NGX_HAVE_EPOLLRDHUP)
             if (revents & EPOLLRDHUP) {
                 rev->pending_eof = 1;
@@ -901,6 +901,7 @@ ngx_epoll_process_events(ngx_cycle_t *cycle, ngx_msec_t timer, ngx_uint_t flags)
             rev->ready = 1;
 
             if (flags & NGX_POST_EVENTS) {
+                //接收队列或者传送队列
                 queue = rev->accept ? &ngx_posted_accept_events
                                     : &ngx_posted_events;
 

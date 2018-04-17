@@ -1214,7 +1214,9 @@ failed:
     ngx_http_run_posted_requests(c);
 }
 
-
+/*
+upstream 模块处理器
+*/
 static void
 ngx_http_upstream_handler(ngx_event_t *ev)
 {
@@ -1238,6 +1240,7 @@ ngx_http_upstream_handler(ngx_event_t *ev)
         ev->timedout = 0;
     }
 
+    /*如果可写,调用write_event_handler,write_event_handler是一个回调函数*/
     if (ev->write) {
         u->write_event_handler(r, u);
 
@@ -1921,31 +1924,34 @@ ngx_http_upstream_reinit(ngx_http_request_t *r, ngx_http_upstream_t *u)
 }
 
 
+/*发送Request请求*/
 static void
 ngx_http_upstream_send_request(ngx_http_request_t *r, ngx_http_upstream_t *u,
     ngx_uint_t do_write)
 {
+    //响应码,rc=ret_code
     ngx_int_t          rc;
+    //http连接
     ngx_connection_t  *c;
 
     c = u->peer.connection;
-
+    //log会被Connection持有,可以自己定义,也可以使用默认log文件.
     ngx_log_debug0(NGX_LOG_DEBUG_HTTP, c->log, 0,
                    "http upstream send request");
 
     if (u->state->connect_time == (ngx_msec_t) -1) {
         u->state->connect_time = ngx_current_msec - u->state->response_time;
     }
-
+    //ngx_http_upstream_test_connect测试连接,如果失败则使用下一个服务器
     if (!u->request_sent && ngx_http_upstream_test_connect(c) != NGX_OK) {
         ngx_http_upstream_next(r, u, NGX_HTTP_UPSTREAM_FT_ERROR);
         return;
     }
 
     c->log->action = "sending request to upstream";
-
+    //发送请求体,针对post请求,需要处理请求体
     rc = ngx_http_upstream_send_request_body(r, u, do_write);
-
+    //处理失败则使用下一个upstream并返回
     if (rc == NGX_ERROR) {
         ngx_http_upstream_next(r, u, NGX_HTTP_UPSTREAM_FT_ERROR);
         return;
@@ -1955,7 +1961,7 @@ ngx_http_upstream_send_request(ngx_http_request_t *r, ngx_http_upstream_t *u,
         ngx_http_upstream_finalize_request(r, u, rc);
         return;
     }
-
+    //重新读取
     if (rc == NGX_AGAIN) {
         if (!c->write->ready) {
             ngx_add_timer(c->write, u->conf->send_timeout);
@@ -1974,7 +1980,7 @@ ngx_http_upstream_send_request(ngx_http_request_t *r, ngx_http_upstream_t *u,
     }
 
     /* rc == NGX_OK */
-
+    /* 如果处理成功,设置body_sent标志位为1, */
     u->request_body_sent = 1;
 
     if (c->write->timer_set) {
@@ -2126,7 +2132,7 @@ ngx_http_upstream_send_request_body(ngx_http_request_t *r,
     return rc;
 }
 
-
+/*发送请求处理器*/
 static void
 ngx_http_upstream_send_request_handler(ngx_http_request_t *r,
     ngx_http_upstream_t *u)
@@ -2142,7 +2148,7 @@ ngx_http_upstream_send_request_handler(ngx_http_request_t *r,
         ngx_http_upstream_next(r, u, NGX_HTTP_UPSTREAM_FT_TIMEOUT);
         return;
     }
-
+//https连接
 #if (NGX_HTTP_SSL)
 
     if (u->ssl && c->ssl == NULL) {
@@ -2151,7 +2157,7 @@ ngx_http_upstream_send_request_handler(ngx_http_request_t *r,
     }
 
 #endif
-
+    //如果发送header,向客户端发送response时设置为1.ngx_http_upstream_send_response
     if (u->header_sent) {
         u->write_event_handler = ngx_http_upstream_dummy_handler;
 
@@ -2159,7 +2165,7 @@ ngx_http_upstream_send_request_handler(ngx_http_request_t *r,
 
         return;
     }
-
+    //发送请求,向真正的服务器发送请求
     ngx_http_upstream_send_request(r, u, 1);
 }
 
