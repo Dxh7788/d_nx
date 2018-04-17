@@ -334,7 +334,7 @@ ngx_epoll_init(ngx_cycle_t *cycle, ngx_msec_t timer)
                           "epoll_create() failed");
             return NGX_ERROR;
         }
-
+//如果开启测试epoll,则NGX_TEST_BUILD_EPOLL
 #if (NGX_HAVE_EVENTFD)
         if (ngx_epoll_notify_init(cycle->log) != NGX_OK) {
             ngx_epoll_module_ctx.actions.notify = NULL;
@@ -367,7 +367,7 @@ ngx_epoll_init(ngx_cycle_t *cycle, ngx_msec_t timer)
     ngx_io = ngx_os_io;
     //event事件集
     ngx_event_actions = ngx_epoll_module_ctx.actions;
-
+//此处的意思是如果找到确定的event模块,那么打一个标签,代表找到清晰的模块.否则使用和操作系统平级的模块,比如SELECT模块.
 #if (NGX_HAVE_CLEAR_EVENT)
     ngx_event_flags = NGX_USE_CLEAR_EVENT
 #else
@@ -606,7 +606,7 @@ ngx_epoll_add_event(ngx_event_t *ev, ngx_int_t event, ngx_uint_t flags)
         events = EPOLLOUT;
 #endif
     }
-
+    //如果事件是激活状态,则修改.否则新增
     if (e->active) {
         op = EPOLL_CTL_MOD;
         events |= prev;
