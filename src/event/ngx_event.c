@@ -331,7 +331,10 @@ ngx_handle_read_event(ngx_event_t *rev, ngx_uint_t flags)
     return NGX_OK;
 }
 
-//写事件处理器 handler
+//写事件处理器 handler,通过ngx_event_flags来决定使用哪种模型.
+//NGX_USE_CLEAR_EVENT使用kqueue和epoll,
+//NGX_USE_LEVEL_EVENT使用select/poll/dev_poll,
+//NGX_USE_EVENTPORT_EVENT使用eventport
 ngx_int_t
 ngx_handle_write_event(ngx_event_t *wev, size_t lowat)
 {
